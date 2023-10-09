@@ -1,13 +1,12 @@
 // Function to save user data in local storage
 function saveUserData(name, email, phone) {
-  let userDataList = JSON.parse(localStorage.getItem("userDataList")) || [];
-
   const userData = {
     name: name,
     email: email,
     phone: phone,
   };
 
+  let userDataList = JSON.parse(localStorage.getItem("userDataList")) || [];
   userDataList.push(userData);
   localStorage.setItem("userDataList", JSON.stringify(userDataList));
 }
@@ -15,60 +14,23 @@ function saveUserData(name, email, phone) {
 // Function to display all user data in the HTML body
 function displayAllUserData() {
   const userDataList = JSON.parse(localStorage.getItem("userDataList"));
+  const bookingData = document.getElementById("bookingData");
+  bookingData.innerHTML = ""; // Clear the previous data
 
   if (userDataList && userDataList.length > 0) {
-    const bookingData = document.getElementById("bookingData");
-    bookingData.innerHTML = `
-            <h2>Booking Details:</h2>
-        `;
-
     userDataList.forEach((userData, index) => {
       const userEntry = document.createElement("div");
       userEntry.classList.add("user-entry");
       userEntry.innerHTML = `
-                <p><strong>Name:</strong> ${userData.name}</p>
-                <p><strong>Email:</strong> ${userData.email}</p>
-                <p><strong>Phone Number:</strong> ${userData.phone}</p>
-                <button class="delete-button" data-index="${index}">Delete</button>
-            `;
-
+        <p><strong>Name:</strong> ${userData.name}</p>
+        <p><strong>Email:</strong> ${userData.email}</p>
+        <p><strong>Phone Number:</strong> ${userData.phone}</p>
+        <button class="edit-button" data-index="${index}">Edit</button>
+        <button class="delete-button" data-index="${index}">Delete</button>
+      `;
       bookingData.appendChild(userEntry);
     });
-
-    // Add event listeners to delete buttons
-    const deleteButtons = document.querySelectorAll(".delete-button");
-    deleteButtons.forEach((button) => {
-      button.addEventListener("click", function (e) {
-        const indexToDelete = e.target.getAttribute("data-index");
-        deleteUserByIndex(indexToDelete);
-      });
-    });
   }
-}
-
-// Function to delete a user by index
-function deleteUserByIndex(index) {
-  let userDataList = JSON.parse(localStorage.getItem("userDataList")) || [];
-
-  if (index >= 0 && index < userDataList.length) {
-    userDataList.splice(index, 1);
-    localStorage.setItem("userDataList", JSON.stringify(userDataList));
-    // Call checkUI to refresh the UI after removing a user
-    checkUI();
-  }
-}
-
-// Function to check the UI against local storage data and update the UI
-function checkUI() {
-  const userDataList = JSON.parse(localStorage.getItem("userDataList"));
-  const userEntries = document.querySelectorAll(".user-entry");
-
-  // Remove any user entries from the UI that do not exist in local storage
-  userEntries.forEach((userEntry, index) => {
-    if (!userDataList || index >= userDataList.length) {
-      userEntry.remove();
-    }
-  });
 }
 
 // Event listener for form submission
@@ -88,13 +50,57 @@ bookingForm.addEventListener("submit", function (e) {
   saveUserData(name, email, phone);
 
   // Display all user data in the HTML body
-  displayAllUserData();
+  checkUI();
 
   // Clear form inputs
   nameInput.value = "";
   emailInput.value = "";
   phoneInput.value = "";
 });
-
-// Initial display of all user data when the page loads
-displayAllUserData();
+//Event listener for delete button
+function setupDeleteButtons() {
+  const deleteButtons = document.querySelectorAll(".delete-button");
+  deleteButtons.forEach((button) => {
+    button.addEventListener("click", function (e) {
+      const indexToDelete = e.target.getAttribute("data-index");
+      deleteUserByIndex(indexToDelete);
+    });
+  });
+}
+//function to delete a user by index
+function deleteUserByIndex(index) {
+  let userDataList = JSON.parse(localStorage.getItem("userDataList")) || [];
+  if (index >= 0 && index < userDataList.length) {
+    userDataList.splice(index, 1);
+    localStorage.setItem("userDataList", JSON.stringify(userDataList));
+    checkUI(); //to refresh the UI after removing
+  }
+}
+function checkUI() {
+  displayAllUserData();
+  setupDeleteButtons();
+  setupEditButtons();
+}
+//Event listener for Edit Button
+function setupEditButtons() {
+  const editButtons = document.querySelectorAll(".edit-button");
+  editButtons.forEach((button) => {
+    button.addEventListener("click", function (e) {
+      const indexToEdit = e.target.getAttribute("data-index");
+      populateUserDetailsForEdit(indexToEdit);
+      deleteUserByIndex(indexToEdit);
+    });
+  });
+}
+//populate user details to input boxes
+function populateUserDetailsForEdit(index) {
+  const userDataList = JSON.parse(localStorage.getItem("userDataList"));
+  if (index >= 0 && index < userDataList.length) {
+    const user = userDataList[index];
+    document.getElementById("name").value = user.name;
+    document.getElementById("email").value = user.email;
+    document.getElementById("phone").value = user.phone;
+  }
+}
+// Initial functions when the page loads
+checkUI();
